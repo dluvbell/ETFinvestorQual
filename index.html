@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Habits & Mindset Check</title>
+    <style>
+        :root {
+            --primary-color: #4A90E2;
+            --bg-color: #F4F7F6;
+            --card-bg: #FFFFFF;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --border-color: #E0E0E0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .question-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .options-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .options-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            padding: 0 10px;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .radio-group input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 30px;
+            margin-bottom: 50px;
+        }
+
+        .submit-btn:hover {
+            background-color: #357ABD;
+        }
+
+        #result-section {
+            display: none;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-top: 5px solid var(--primary-color);
+            margin-bottom: 40px;
+        }
+
+        .result-title {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .category-result {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #f8fbff;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .category-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .final-score {
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #eef5e5;
+            border-radius: 8px;
+            color: #2e7d32;
+        }
+
+        .disclaimer {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 40px;
+            text-align: justify;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .options-container {
+                flex-direction: row;
+                flex-wrap: nowrap;
+                padding: 10px;
+            }
+            .radio-group input[type="radio"] {
+                width: 16px;
+                height: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Daily Habits & Mindset Check</h1>
+        <p>This quick survey looks at your daily habits and decision-making style. Rate how much you agree or disagree with each statement (1 = Strongly Disagree, 5 = Strongly Agree). Be honest—there are no right or wrong answers!</p>
+    </header>
+
+    <form id="quiz-form">
+        <div id="quiz-container"></div>
+        <button type="button" class="submit-btn" onclick="calculateResults()">Submit & Get Results</button>
+    </form>
+
+    <div id="result-section">
+        <h2 class="result-title">Your Mindset Analysis</h2>
+        
+        <div class="category-result">
+            <div class="category-title">Goal Persistence</div>
+            <div id="desc-cat1"></div>
+        </div>
+        <div class="category-result">
+            <div class="category-title">Independent Mindset</div>
+            <div id="desc-cat2"></div>
+        </div>
+        <div class="category-result">
+            <div class="category-title">Principle Adherence</div>
+            <div id="desc-cat3"></div>
+        </div>
+        <div class="category-result">
+            <div class="category-title">Crisis Preparation</div>
+            <div id="desc-cat4"></div>
+        </div>
+
+        <div class="final-score" id="final-probability"></div>
+
+        <div class="disclaimer">
+            <strong>※ Disclaimer:</strong> This test is for educational and self-assessment purposes only, designed to explore psychological traits related to long-term planning through daily habits. The "probability of success" is a playful metric and is not a guarantee of actual financial market returns, nor is this a recommendation to buy or sell any specific financial products. All actual investment decisions and responsibilities lie with the individual.
+        </div>
+    </div>
+</div>
+
+<script>
+    // 질문 데이터 배열 (나중에 여기서 질문 텍스트를 개별적으로 수정 가능합니다)
+    // category: 1(시계열), 2(FOMO), 3(레버리지/정석), 4(리스크대비)
+    // reverse: true면 부정적 질문 (1점이 투자에 좋은 점수)
+    const questionsDB = [
+        { text: "I have set a long-term goal (like working out or learning an instrument) that takes more than a month and successfully stuck with it.", category: 1, reverse: false },
+        { text: "If I don't see results within a few days of starting to study or exercise, I lose interest and quit right away.", category: 1, reverse: true },
+        { text: "Even if the line is long, I am willing to wait 30+ minutes at a restaurant I really want to try.", category: 1, reverse: false },
+        { text: "If a video or show is pacing a bit slow, I always speed it up or skip through it.", category: 1, reverse: true },
+        { text: "I actually enjoy the process of saving up my allowance for months to buy something expensive I really want.", category: 1, reverse: false },
+        { text: "If my character's level-up is too slow in a game, I get frustrated and quickly switch to another game.", category: 1, reverse: true },
+        
+        { text: "I feel anxious and left out if I don't have the trendy clothes or shoes everyone else has.", category: 2, reverse: true },
+        { text: "Even if the majority chooses 'A', I will choose 'B' without hesitating if I think 'B' is right for me.", category: 2, reverse: false },
+        { text: "Seeing photos of friends hanging out at cool places on social media makes my own life feel pathetic.", category: 2, reverse: true },
+        { text: "Even if others tease my hobbies or interests as 'childish', I confidently enjoy what I like.", category: 2, reverse: false },
+        { text: "If a friend who seems to study less than me gets a better mark, I panic and immediately change my own study methods.", category: 2, reverse: true },
+        { text: "When deciding what to eat, I clearly state what I want rather than just going with the group's flow.", category: 2, reverse: false },
+        
+        { text: "Even if a deadline is tight, I will finish an assignment on my own, even if it means losing marks, rather than copying someone else's work.", category: 3, reverse: false },
+        { text: "When trying to get fit or lose weight, I look for extreme short-term methods like starving instead of building a consistent routine.", category: 3, reverse: true },
+        { text: "When moving heavy items, I take the time to move them in multiple small trips to avoid getting hurt, even if it's annoying.", category: 3, reverse: false },
+        { text: "If I am about to be late, I will run across the street dangerously or ignore traffic lights to save time.", category: 3, reverse: true },
+        { text: "I would rather lose a game fairly than use risky cheats or bugs that could get my account banned.", category: 3, reverse: false },
+        { text: "Hearing the phrase 'high risk, high return' excites me and makes me want to jump right in.", category: 3, reverse: true },
+        
+        { text: "I always leave 10-15 minutes early for plans to account for unexpected delays like traffic.", category: 4, reverse: false },
+        { text: "I usually just think 'it'll work out' and never make a 'Plan B' for trips or weekend plans.", category: 4, reverse: true },
+        { text: "If the weather forecast says it might rain, I always bring an umbrella even if it's a hassle to carry.", category: 4, reverse: false },
+        { text: "If I have money in my account, I spend it all, assuming I won't have any emergencies tomorrow.", category: 4, reverse: true },
+        { text: "When I get money, I don't spend it all; I always save a certain amount just in case I need it unexpectedly.", category: 4, reverse: false },
+        { text: "On the night before an exam, I overestimate my stamina and make unreasonable plans like 'I can stay up all night and finish studying.'", category: 4, reverse: true }
+    ];
+
+    let currentQuestions = [];
+
+    // 배열 무작위 섞기 함수 (Fisher-Yates Shuffle)
+    function shuffleArray(array) {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex !== 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+        return array;
+    }
+
+    // 화면에 질문 렌더링
+    function renderQuestions() {
+        const container = document.getElementById('quiz-container');
+        currentQuestions = shuffleArray([...questionsDB]);
+
+        currentQuestions.forEach((q, index) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            
+            let html = `
+                <div class="question-text">${index + 1}. ${q.text}</div>
+                <div class="options-labels">
+                    <span>1 (Strongly Disagree)</span>
+                    <span>5 (Strongly Agree)</span>
+                </div>
+                <div class="options-container">
+            `;
+
+            for (let i = 1; i <= 5; i++) {
+                html += `
+                    <label class="radio-group">
+                        <input type="radio" name="q${index}" value="${i}">
+                        <span>${i}</span>
+                    </label>
+                `;
+            }
+
+            html += `</div>`;
+            card.innerHTML = html;
+            container.appendChild(card);
+        });
+    }
+
+    // 결과 계산 및 화면 표시
+    function calculateResults() {
+        let totalScore = 0;
+        let answeredCount = 0;
+
+        currentQuestions.forEach((q, index) => {
+            const selected = document.querySelector(`input[name="q${index}"]:checked`);
+            if (selected) {
+                answeredCount++;
+                let rawVal = parseInt(selected.value);
+                // 역문항인 경우 점수 반전 (1->5, 5->1)
+                let finalVal = q.reverse ? (6 - rawVal) : rawVal;
+                totalScore += finalVal;
+            }
+        });
+
+        if (answeredCount < currentQuestions.length) {
+            alert("Please answer all questions before submitting!");
+            return;
+        }
+
+        // 전체 점수를 기반으로 퍼센트 계산 (120점 만점)
+        const percentage = Math.round((totalScore / 120) * 100);
+
+        // 정성적 결과 텍스트 (영문)
+        document.getElementById('desc-cat1').innerText = "You show great patience and can stick to long-term plans without rushing for immediate gratification.";
+        document.getElementById('desc-cat2').innerText = "You make decisions based on your own values and logic, not just blindly following the crowd or trends.";
+        document.getElementById('desc-cat3').innerText = "You prefer doing things the right way and steadily building up, rather than taking reckless shortcuts.";
+        document.getElementById('desc-cat4').innerText = "You are a forward-thinker who leaves a safety margin for unexpected events instead of relying purely on optimism.";
+
+        document.getElementById('final-probability').innerText = `Based on your daily habits, your estimated probability of successfully achieving long-term financial goals is ${percentage}%!`;
+
+        // 폼 숨기고 결과 보여주기
+        document.getElementById('quiz-form').style.display = 'none';
+        document.getElementById('result-section').style.display = 'block';
+        window.scrollTo(0, 0);
+    }
+
+    // 페이지 로드 시 실행
+    window.onload = renderQuestions;
+
+</script>
+</body>
+</html>
