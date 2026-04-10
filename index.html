@@ -1,131 +1,1093 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S&P 500 3x Leverage Simulation</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Daily Habits & Mindset Check</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a3a5c;
+            --accent:  #e8a020;
+            --accent2: #2e8b6e;
+            --bg:      #f0ede8;
+            --card:    #fafaf8;
+            --text:    #1c1c1c;
+            --muted:   #7a7065;
+            --border:  #ddd9d2;
+            --danger:  #c0392b;
+            --c-growth:   #1a3a5c;
+            --c-balanced: #2e8b6e;
+            --c-stable:   #e8a020;
+            --c-safe:     #8b2e6e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 40px 20px 80px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse at 10% 20%, rgba(26,58,92,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 90% 80%, rgba(232,160,32,0.07) 0%, transparent 60%);
+            pointer-events: none; z-index: 0;
+        }
+
+        .container { max-width: 760px; margin: 0 auto; position: relative; z-index: 1; }
+
+        /* HEADER */
+        header { text-align: center; margin-bottom: 48px; animation: fadeDown 0.6s ease both; }
+        .header-eyebrow { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+        header h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 5vw, 2.8rem); color: var(--primary); line-height: 1.2; margin-bottom: 16px; }
+        header p { color: var(--muted); font-size: 0.97rem; max-width: 560px; margin: 0 auto; line-height: 1.7; }
+
+        /* STAGE INDICATOR */
+        .stage-indicator { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 36px; }
+        .stage-step { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 120px; }
+        .stage-circle {
+            width: 36px; height: 36px; border-radius: 50%;
+            border: 2px solid var(--border); background: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: 700; color: var(--muted); transition: all 0.4s ease;
+        }
+        .stage-circle.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .stage-circle.done   { background: var(--accent2); border-color: var(--accent2); color: white; }
+        .stage-label { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.05em; text-align: center; }
+        .stage-line { flex: 1; height: 2px; background: var(--border); max-width: 60px; margin-bottom: 20px; }
+
+        /* PROGRESS */
+        .progress-label { font-size: 0.82rem; color: var(--muted); text-align: right; margin-bottom: 6px; }
+        .progress-bar-wrap { background: var(--border); border-radius: 99px; height: 6px; margin-bottom: 32px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent2)); border-radius: 99px; transition: width 0.3s ease; width: 0%; }
+
+        /* QUESTION CARD */
+        .question-card {
+            background: var(--card); border-radius: 16px; padding: 28px 30px;
+            margin-bottom: 16px; border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            animation: fadeUp 0.4s ease both; animation-fill-mode: both;
+        }
+        .question-card.answered { border-color: rgba(46,139,110,0.35); box-shadow: 0 2px 12px rgba(46,139,110,0.08); }
+        .question-card.unanswered-error { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(192,57,43,0.12); }
+
+        .question-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .q-number { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; color: var(--accent); background: rgba(232,160,32,0.1); padding: 3px 10px; border-radius: 99px; }
+        .q-category { font-size: 0.72rem; color: var(--muted); }
+        .question-text { font-size: 1rem; font-weight: 500; line-height: 1.6; color: var(--text); margin-bottom: 20px; }
+        .scale-labels { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); margin-bottom: 10px; padding: 0 4px; }
+
+        .radio-row { display: flex; justify-content: space-between; gap: 8px; }
+        .radio-option { flex: 1; display: flex; flex-direction: column; align-items: center; }
+        .radio-option input[type="radio"] { display: none; }
+        .radio-option label {
+            width: 100%; height: 44px; border-radius: 10px; border: 2px solid var(--border);
+            background: white; display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.18s ease;
+        }
+        .radio-option input[type="radio"]:checked + label { background: var(--primary); border-color: var(--primary); color: white; transform: scale(1.05); box-shadow: 0 4px 12px rgba(26,58,92,0.25); }
+        .radio-option label:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* SCENARIO CARD */
+        .scenario-card {
+            background: var(--card); border-radius: 16px; padding: 28px 30px;
+            margin-bottom: 16px; border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            animation: fadeUp 0.4s ease both; animation-fill-mode: both;
+        }
+        .scenario-card.answered { border-color: rgba(46,139,110,0.35); box-shadow: 0 2px 12px rgba(46,139,110,0.08); }
+        .scenario-card.unanswered-error { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(192,57,43,0.12); }
+
+        .scenario-emoji { font-size: 1.6rem; margin-bottom: 10px; }
+        .scenario-text { font-size: 1rem; font-weight: 500; line-height: 1.65; color: var(--text); margin-bottom: 18px; }
+        .scenario-options { display: flex; flex-direction: column; gap: 10px; }
+        .scenario-option input[type="radio"] { display: none; }
+        .scenario-option label {
+            display: block; width: 100%; padding: 13px 18px;
+            border: 2px solid var(--border); border-radius: 12px;
+            background: white; font-size: 0.92rem; line-height: 1.5;
+            color: var(--text); cursor: pointer; transition: all 0.18s ease;
+        }
+        .scenario-option label:hover { border-color: var(--primary); background: rgba(26,58,92,0.03); }
+        .scenario-option input[type="radio"]:checked + label { border-color: var(--primary); background: rgba(26,58,92,0.06); font-weight: 600; color: var(--primary); }
+        .option-letter {
+            display: inline-block; width: 22px; height: 22px; border-radius: 50%;
+            background: var(--border); color: var(--muted);
+            font-size: 0.72rem; font-weight: 700; text-align: center; line-height: 22px;
+            margin-right: 10px; transition: all 0.18s;
+        }
+        .scenario-option input[type="radio"]:checked + label .option-letter { background: var(--primary); color: white; }
+
+        /* BUTTONS */
+        .action-btn {
+            display: block; width: 100%; background: var(--primary); color: white; border: none;
+            padding: 18px; font-family: 'DM Sans', sans-serif; font-size: 1.05rem; font-weight: 600;
+            border-radius: 12px; cursor: pointer; transition: background 0.2s, transform 0.1s;
+            margin-top: 32px; letter-spacing: 0.02em;
+        }
+        .action-btn:hover { background: #0f2840; }
+        .action-btn:active { transform: scale(0.99); }
+
+        .stage2-intro {
+            background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+            padding: 28px 30px; margin-bottom: 28px; text-align: center; animation: fadeUp 0.5s ease both;
+        }
+        .stage2-intro h3 { font-family: 'Playfair Display', serif; color: var(--primary); font-size: 1.4rem; margin-bottom: 10px; }
+        .stage2-intro p { color: var(--muted); font-size: 0.93rem; line-height: 1.65; }
+
+        /* RESULT */
+        #result-section { display: none; animation: fadeUp 0.5s ease both; }
+
+        /* Section divider */
+        .result-section-label {
+            display: flex; align-items: center; gap: 14px;
+            margin: 36px 0 20px;
+        }
+        .result-section-label span {
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em;
+            text-transform: uppercase; color: var(--accent); white-space: nowrap;
+        }
+        .result-section-label::after {
+            content: ''; flex: 1; height: 1px; background: var(--border);
+        }
+
+        /* Mindset score banner */
+        .mindset-banner {
+            background: var(--primary); border-radius: 16px; padding: 28px 30px;
+            text-align: center; margin-bottom: 20px; color: white;
+        }
+        .mindset-banner-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.7; margin-bottom: 8px; }
+        .mindset-banner-score { font-family: 'Playfair Display', serif; font-size: 3.6rem; font-weight: 700; color: var(--accent); line-height: 1; }
+        .mindset-banner-title { font-size: 1.1rem; font-weight: 600; margin-top: 6px; }
+        .mindset-banner-subtitle { font-size: 0.88rem; opacity: 0.75; margin-top: 4px; line-height: 1.5; }
+
+        /* Category cards */
+        .category-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        @media (max-width: 560px) { .category-grid { grid-template-columns: 1fr; } }
+
+        .cat-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; position: relative; overflow: hidden; }
+        .cat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--cat-color, var(--primary)); }
+        .cat-card[data-cat="1"] { --cat-color: #1a3a5c; }
+        .cat-card[data-cat="2"] { --cat-color: #e8a020; }
+        .cat-card[data-cat="3"] { --cat-color: #2e8b6e; }
+        .cat-card[data-cat="4"] { --cat-color: #8b2e6e; }
+        .cat-name { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cat-color, var(--primary)); margin-bottom: 4px; }
+        .cat-score-label { font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+        .cat-score-bar-wrap { background: var(--border); border-radius: 99px; height: 6px; margin-bottom: 10px; overflow: hidden; }
+        .cat-score-bar { height: 100%; background: var(--cat-color, var(--primary)); border-radius: 99px; transition: width 1s ease; }
+        .cat-feedback { font-size: 0.87rem; color: var(--muted); line-height: 1.6; }
+
+        /* Insight boxes */
+        .insight-box {
+            border-radius: 12px; padding: 18px 20px; margin-top: 10px; font-size: 0.88rem; line-height: 1.65;
+        }
+        .insight-box.meaning {
+            background: rgba(26,58,92,0.05); border-left: 3px solid var(--primary);
+        }
+        .insight-box.criticism {
+            background: rgba(232,160,32,0.08); border-left: 3px solid var(--accent);
+        }
+        .insight-box.action {
+            background: rgba(46,139,110,0.07); border-left: 3px solid var(--accent2);
+        }
+        .insight-box-title {
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em;
+            text-transform: uppercase; margin-bottom: 6px;
+        }
+        .insight-box.meaning .insight-box-title  { color: var(--primary); }
+        .insight-box.criticism .insight-box-title { color: var(--accent); }
+        .insight-box.action .insight-box-title    { color: var(--accent2); }
+
+        /* Portfolio card */
+        .portfolio-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 26px; margin-bottom: 16px; }
+        .portfolio-card-title { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+        .portfolio-card-subtitle { font-size: 0.88rem; color: var(--muted); margin-bottom: 24px; line-height: 1.55; }
+
+        .portfolio-layout { display: grid; grid-template-columns: 190px 1fr; gap: 32px; align-items: center; }
+        @media (max-width: 560px) { .portfolio-layout { grid-template-columns: 1fr; justify-items: center; } }
+
+        .donut-wrap { position: relative; width: 190px; height: 190px; }
+        .donut-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+        .donut-center-label { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.05em; margin-top: 2px; }
+
+        .alloc-list { display: flex; flex-direction: column; gap: 14px; width: 100%; }
+        .alloc-row { display: flex; flex-direction: column; gap: 5px; }
+        .alloc-row-header { display: flex; justify-content: space-between; align-items: center; }
+        .alloc-tier-name { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; font-weight: 600; color: var(--text); }
+        .alloc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .alloc-pct { font-size: 0.9rem; font-weight: 700; color: var(--text); }
+        .alloc-bar-wrap { background: var(--border); border-radius: 99px; height: 5px; overflow: hidden; }
+        .alloc-bar { height: 100%; border-radius: 99px; transition: width 1.2s ease; }
+        .alloc-tickers { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
+        .alloc-ticker { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; padding: 3px 10px; border-radius: 6px; color: white; cursor: default; }
+
+        /* Combined insight */
+        .combined-card {
+            background: var(--primary); color: white;
+            border-radius: 14px; padding: 26px; margin-bottom: 16px;
+        }
+        .combined-card-title { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.7; margin-bottom: 14px; }
+        .combined-match { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .match-badge {
+            font-size: 0.8rem; font-weight: 700; padding: 5px 14px;
+            border-radius: 99px; white-space: nowrap; flex-shrink: 0;
+        }
+        .match-badge.aligned    { background: var(--accent2); color: white; }
+        .match-badge.mismatched { background: var(--accent);  color: white; }
+        .combined-text { font-size: 0.92rem; line-height: 1.7; opacity: 0.9; }
+        .combined-actions { margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.15); }
+        .combined-actions-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; margin-bottom: 10px; }
+        .action-item { display: flex; gap: 10px; font-size: 0.88rem; line-height: 1.6; opacity: 0.9; margin-bottom: 8px; }
+        .action-item::before { content: '→'; opacity: 0.6; flex-shrink: 0; }
+
+        .etf-link {
+            display: inline-block; margin-top: 18px; padding: 10px 20px;
+            background: transparent; color: var(--primary); border: 2px solid var(--primary);
+            border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; transition: all 0.2s;
+        }
+        .etf-link:hover { background: var(--primary); color: white; }
+
+        .retry-btn {
+            display: block; width: 100%; background: transparent; color: var(--primary);
+            border: 2px solid var(--primary); padding: 16px; font-family: 'DM Sans', sans-serif;
+            font-size: 1rem; font-weight: 600; border-radius: 12px; cursor: pointer;
+            transition: all 0.2s; margin-top: 16px;
+        }
+        .retry-btn:hover { background: var(--primary); color: white; }
+
+        .disclaimer { font-size: 0.8rem; color: var(--muted); margin-top: 32px; line-height: 1.65; border-top: 1px solid var(--border); padding-top: 20px; }
+
+        @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeUp   { from { opacity: 0; transform: translateY(20px);  } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>📈 3x Leverage Wealth Management</h1>
-            <p>Test your investment strategy in a 60-year 3x Leveraged S&P 500 market.</p>
-        </header>
+<div class="container">
+    <header>
+        <div class="header-eyebrow">Self-Assessment</div>
+        <h1>Daily Habits &amp; Mindset Check</h1>
+        <p>A two-part assessment that reveals your investor readiness and suggests a portfolio that fits your natural personality.</p>
+    </header>
 
-        <div id="setup-screen" class="card">
-            <h2>Start Simulation</h2>
-            <div class="input-group">
-                <label for="initial-cash">Initial Capital ($):</label>
-                <input type="number" id="initial-cash" value="10000" min="1000">
-            </div>
-            <div class="input-group">
-                <label for="setup-tax-rate">Tax Rate (%):</label>
-                <input type="number" id="setup-tax-rate" value="15" min="0" max="100">
-            </div>
-            <div class="input-group">
-                <label for="setup-trading-fee">Trading Fee ($):</label>
-                <input type="number" id="setup-trading-fee" value="10" min="0">
-            </div>
-            <button id="btn-start" class="primary-btn" style="margin-top: 15px;">Start</button>
+    <div class="stage-indicator" id="stage-indicator">
+        <div class="stage-step">
+            <div class="stage-circle active" id="circle-1">1</div>
+            <div class="stage-label">Mindset<br>Check</div>
         </div>
-
-        <div id="dashboard-screen" class="hidden">
-            <div class="top-dashboard">
-                <div class="stat-card highlight">
-                    <h3>Current Year</h3>
-                    <div id="display-year" class="stat-value">Year 1</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Current Price</h3>
-                    <div id="display-price" class="stat-value">$0</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Total Asset Value</h3>
-                    <div id="display-total" class="stat-value">$0</div>
-                </div>
-            </div>
-
-            <div class="main-content">
-                <div class="control-panel">
-                    <div class="card account-info">
-                        <h3>Account Status</h3>
-                        <p>Cash: <strong id="display-cash">$0</strong></p>
-                        <p>Shares: <strong id="display-shares">0</strong></p>
-                        <p>Average Cost: <strong id="display-avg-cost">$0.00</strong></p>
-                        <p>Realized PnL: <strong id="display-realized">$0.00</strong></p>
-                    </div>
-
-                    <div class="card settings-controls">
-                        <h3>Market Settings</h3>
-                        <div class="input-row">
-                            <label>Tax Rate (%): 
-                                <input type="number" id="input-tax-rate" value="15" min="0" max="100">
-                            </label>
-                            <label>Trading Fee ($): 
-                                <input type="number" id="input-trading-fee" value="10" min="0">
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="card trade-controls">
-                        <h3>Manual Trading</h3>
-                        <p class="max-shares-text">Max Affordable (Current Cash): <strong id="display-max-shares">0</strong> shares</p>
-                        <div class="input-row">
-                            <input type="number" id="trade-qty" placeholder="Quantity" min="1">
-                            <button id="btn-buy" class="buy-btn">Buy</button>
-                            <button id="btn-sell" class="sell-btn">Sell</button>
-                        </div>
-                    </div>
-
-                    <div class="card auto-controls">
-                        <h3>Automated Strategy</h3>
-                        <div class="toggle-group">
-                            <label>
-                                <input type="checkbox" id="toggle-savings"> 
-                                <strong>Annual Savings (Add Cash)</strong>
-                            </label>
-                            <input type="number" id="input-savings-amount" placeholder="Amount ($)" disabled>
-                            <small class="note">* Injects cash into your account every year.</small>
-                        </div>
-                        <div class="toggle-group">
-                            <label>
-                                <input type="checkbox" id="toggle-dca" disabled> 
-                                <strong>Annual Auto-Buy (DCA)</strong>
-                            </label>
-                            <input type="number" id="input-dca-amount" placeholder="Amount ($)" disabled>
-                            <small class="note">* Buys shares from Savings. Cannot exceed Savings.</small>
-                        </div>
-                    </div> 
-
-                    <button id="btn-auto-play" class="auto-play-btn">▶▶ Start Auto-Play (No Pause)</button>
-
-                    <div id="progress-container" class="hidden">
-                        <div class="progress-track">
-                            <div id="progress-bar" class="progress-fill"></div>
-                        </div>
-                        <div id="progress-label" class="progress-label">20 seconds until next year</div>
-                    </div>
-                    
-                    <button id="btn-restart" class="auto-play-btn hidden" style="background:#ef4444; margin-top:10px;">🔄 Restart Simulation</button>
-                </div>
-
-                <div class="chart-container">
-                    <div id="fail-message" class="hidden fail-text">
-                        FAIL<br><span style="font-size: 1.5rem; letter-spacing: 0px; opacity: 0.8;">Fund Wiped Out (Price ≤ 0)</span>
-                    </div>
-                    
-                    <div class="chart-panel card">
-                        <canvas id="assetChart"></canvas>
-                    </div>
-                    <div class="chart-panel card">
-                        <canvas id="priceChart"></canvas>
-                    </div>
-                </div>
-            </div>
+        <div class="stage-line"></div>
+        <div class="stage-step">
+            <div class="stage-circle" id="circle-2">2</div>
+            <div class="stage-label">Lifestyle<br>Scenarios</div>
+        </div>
+        <div class="stage-line"></div>
+        <div class="stage-step">
+            <div class="stage-circle" id="circle-3">3</div>
+            <div class="stage-label">Your<br>Results</div>
         </div>
     </div>
-    <script src="app.js"></script>
+
+    <!-- STAGE 1 -->
+    <div id="stage1-section">
+        <div class="progress-label" id="progress-label-1">0 / 24 answered</div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-bar-1"></div></div>
+        <div id="quiz-container"></div>
+        <button class="action-btn" id="submit-stage1-btn">Next: Lifestyle Scenarios →</button>
+    </div>
+
+    <!-- STAGE 2 -->
+    <div id="stage2-section" style="display:none;">
+        <div class="stage2-intro">
+            <h3>Part 2 — Quick Scenarios</h3>
+            <p>Read each situation and pick the response that feels most natural. Don't overthink it — go with your gut!</p>
+        </div>
+        <div class="progress-label" id="progress-label-2">0 / 12 answered</div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-bar-2"></div></div>
+        <div id="scenario-container"></div>
+        <button class="action-btn" id="submit-stage2-btn">See My Full Results →</button>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="result-section">
+
+        <!-- ── PART 1: MINDSET ── -->
+        <div class="result-section-label"><span>Part 1 — Investor Readiness</span></div>
+
+        <div class="mindset-banner">
+            <div class="mindset-banner-label">Overall Mindset Score</div>
+            <div class="mindset-banner-score" id="score-badge">—%</div>
+            <div class="mindset-banner-title" id="mindset-title"></div>
+            <div class="mindset-banner-subtitle" id="mindset-subtitle"></div>
+        </div>
+
+        <div class="insight-box meaning" id="mindset-meaning-box">
+            <div class="insight-box-title">📌 What This Means</div>
+            <div id="mindset-meaning"></div>
+        </div>
+
+        <div class="category-grid" style="margin-top:16px;">
+            <div class="cat-card" data-cat="1">
+                <div class="cat-name">Goal Persistence</div>
+                <div class="cat-score-label" id="label-cat1"></div>
+                <div class="cat-score-bar-wrap"><div class="cat-score-bar" id="bar-cat1" style="width:0%"></div></div>
+                <div class="cat-feedback" id="desc-cat1"></div>
+            </div>
+            <div class="cat-card" data-cat="2">
+                <div class="cat-name">Independent Mindset</div>
+                <div class="cat-score-label" id="label-cat2"></div>
+                <div class="cat-score-bar-wrap"><div class="cat-score-bar" id="bar-cat2" style="width:0%"></div></div>
+                <div class="cat-feedback" id="desc-cat2"></div>
+            </div>
+            <div class="cat-card" data-cat="3">
+                <div class="cat-name">Principle Adherence</div>
+                <div class="cat-score-label" id="label-cat3"></div>
+                <div class="cat-score-bar-wrap"><div class="cat-score-bar" id="bar-cat3" style="width:0%"></div></div>
+                <div class="cat-feedback" id="desc-cat3"></div>
+            </div>
+            <div class="cat-card" data-cat="4">
+                <div class="cat-name">Crisis Preparation</div>
+                <div class="cat-score-label" id="label-cat4"></div>
+                <div class="cat-score-bar-wrap"><div class="cat-score-bar" id="bar-cat4" style="width:0%"></div></div>
+                <div class="cat-feedback" id="desc-cat4"></div>
+            </div>
+        </div>
+
+        <div class="insight-box criticism">
+            <div class="insight-box-title">⚠️ Constructive Criticism</div>
+            <div id="mindset-criticism"></div>
+        </div>
+
+        <div class="insight-box action">
+            <div class="insight-box-title">✅ How to Improve</div>
+            <div id="mindset-action"></div>
+        </div>
+
+        <!-- ── PART 2: PORTFOLIO ── -->
+        <div class="result-section-label"><span>Part 2 — Your Portfolio Profile</span></div>
+
+        <div class="portfolio-card">
+            <div class="portfolio-card-title">📊 Suggested Portfolio Allocation</div>
+            <div class="portfolio-card-subtitle" id="portfolio-subtitle"></div>
+
+            <div class="portfolio-layout">
+                <div class="donut-wrap">
+                    <svg viewBox="0 0 100 100" id="donut-svg"></svg>
+                    <div class="donut-center">
+                        <div class="donut-center-label">Portfolio</div>
+                    </div>
+                </div>
+                <div class="alloc-list" id="alloc-list"></div>
+            </div>
+
+            <div style="margin-top:18px; padding:14px 16px; background:rgba(26,58,92,0.05); border-radius:10px; font-size:0.85rem; line-height:1.65; color:#7a7065;">
+                <strong style="color:#1a3a5c;">💡 How to read this:</strong> These tiers show your risk appetite across a spectrum. In practice, you don't need one ETF from each zone — pick <strong>2–3 ETFs total</strong> that cover your highest-weighted tiers. Stick to <strong>one ETF per zone maximum</strong>; owning multiple ETFs in the same zone just duplicates exposure without adding real diversification.
+            </div>
+            <a href="https://etfdb.com/" target="_blank" class="etf-link">Research ETFs on ETFdb.com →</a>
+        </div>
+
+        <div class="insight-box meaning">
+            <div class="insight-box-title">📌 What This Portfolio Means</div>
+            <div id="portfolio-meaning"></div>
+        </div>
+
+        <div class="insight-box criticism">
+            <div class="insight-box-title">⚠️ Watch Out For</div>
+            <div id="portfolio-criticism"></div>
+        </div>
+
+        <!-- ── COMBINED INSIGHT ── -->
+        <div class="result-section-label"><span>Combined Analysis</span></div>
+
+        <div class="combined-card">
+            <div class="combined-card-title">🔍 Mindset vs. Portfolio — Do They Match?</div>
+            <div class="combined-match">
+                <span class="match-badge" id="match-badge"></span>
+                <div class="combined-text" id="combined-text"></div>
+            </div>
+            <div class="combined-actions">
+                <div class="combined-actions-title">Your Next Steps</div>
+                <div id="combined-actions"></div>
+            </div>
+        </div>
+
+        <button class="retry-btn" id="retry-btn">🔄 Try Again with New Questions</button>
+
+        <div class="disclaimer">
+            <strong>※ Disclaimer:</strong> This assessment is for educational purposes only. Portfolio allocations and ETF tickers shown are illustrative examples — not financial advice. All investment decisions are your own responsibility. Always do your own research before investing.
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA — STAGE 1 (18 per category, pick 6 each = 24)
+// ═══════════════════════════════════════════════════════
+const questionsDB = [
+    // Cat 1: Goal Persistence
+    { text: "I have set a long-term goal (like working out or learning an instrument) that takes more than a month and successfully stuck with it.", category: 1, reverse: false },
+    { text: "If I don't see results within a few days of starting to study or exercise, I lose interest and quit right away.", category: 1, reverse: true },
+    { text: "Even if the line is long, I am willing to wait 30+ minutes at a restaurant I really want to try.", category: 1, reverse: false },
+    { text: "If a video or show is pacing a bit slow, I always speed it up or skip through it.", category: 1, reverse: true },
+    { text: "I actually enjoy the process of saving up for months to buy something expensive I really want.", category: 1, reverse: false },
+    { text: "If my character's level-up is too slow in a game, I get frustrated and quickly switch to another game.", category: 1, reverse: true },
+    { text: "I have kept a daily journal, habit tracker, or practice log for more than two weeks in a row.", category: 1, reverse: false },
+    { text: "When I start reading a book, I usually abandon it before finishing it.", category: 1, reverse: true },
+    { text: "I prefer steady daily progress over cramming everything into one intense session.", category: 1, reverse: false },
+    { text: "I frequently switch between different hobbies or projects before completing any of them.", category: 1, reverse: true },
+    { text: "When a long-term plan gets boring in the middle, I remind myself of the end goal and keep going.", category: 1, reverse: false },
+    { text: "I get excited about new projects but rarely follow through to completion.", category: 1, reverse: true },
+    { text: "I have practiced a skill (sport, instrument, language) consistently for more than three months.", category: 1, reverse: false },
+    { text: "I tend to lose motivation quickly when something takes longer than I expected.", category: 1, reverse: true },
+    { text: "I find satisfaction in looking back at small but consistent progress over time.", category: 1, reverse: false },
+    { text: "I often give up on a diet or exercise plan within the first week.", category: 1, reverse: true },
+    { text: "I set aside regular time each week to work toward a personal goal, even when I'm busy.", category: 1, reverse: false },
+    { text: "When something is hard or slow, I look for a faster alternative rather than staying the course.", category: 1, reverse: true },
+
+    // Cat 2: Independent Mindset
+    { text: "I feel anxious and left out if I don't have the trendy clothes or shoes everyone else has.", category: 2, reverse: true },
+    { text: "Even if the majority chooses 'A', I will choose 'B' without hesitating if I think 'B' is right for me.", category: 2, reverse: false },
+    { text: "Seeing photos of friends hanging out at cool places on social media makes my own life feel pathetic.", category: 2, reverse: true },
+    { text: "Even if others tease my hobbies or interests as 'childish', I confidently enjoy what I like.", category: 2, reverse: false },
+    { text: "If a friend who seems to study less than me gets a better mark, I panic and immediately change my own study methods.", category: 2, reverse: true },
+    { text: "When deciding what to eat, I clearly state what I want rather than just going with the group's flow.", category: 2, reverse: false },
+    { text: "I often buy things just because they are popular or because influencers recommend them.", category: 2, reverse: true },
+    { text: "I can confidently defend a minority opinion in a group discussion without feeling embarrassed.", category: 2, reverse: false },
+    { text: "I feel pressure to like the same music or movies as the people around me.", category: 2, reverse: true },
+    { text: "When making an important decision, I prioritize my own research over what others say.", category: 2, reverse: false },
+    { text: "I change my plans to match what friends suggest, even when I had a clear preference.", category: 2, reverse: true },
+    { text: "I am comfortable pursuing a goal that most people around me don't understand or support.", category: 2, reverse: false },
+    { text: "When everyone around me is panic-buying or panic-selling something, I tend to follow along.", category: 2, reverse: true },
+    { text: "I evaluate a product or idea on its actual merits rather than its hype.", category: 2, reverse: false },
+    { text: "I feel uncomfortable wearing or using something if no one else I know owns it.", category: 2, reverse: true },
+    { text: "I have changed a strong personal opinion just because someone important to me disagreed.", category: 2, reverse: true },
+    { text: "I research a topic myself before forming an opinion, rather than relying on what is trending.", category: 2, reverse: false },
+    { text: "I need external validation (likes, praise) to feel confident about my choices.", category: 2, reverse: true },
+
+    // Cat 3: Principle Adherence
+    { text: "Even if a deadline is tight, I will finish an assignment on my own, even if it means losing marks, rather than copying someone else's work.", category: 3, reverse: false },
+    { text: "When trying to get fit or lose weight, I look for extreme short-term methods like starving instead of building a consistent routine.", category: 3, reverse: true },
+    { text: "When moving heavy items, I take the time to move them in multiple small trips to avoid getting hurt, even if it's annoying.", category: 3, reverse: false },
+    { text: "If I am about to be late, I will run across the street dangerously or ignore traffic lights to save time.", category: 3, reverse: true },
+    { text: "I would rather lose a game fairly than use risky cheats or bugs that could get my account banned.", category: 3, reverse: false },
+    { text: "Hearing the phrase 'high risk, high return' excites me and makes me want to jump right in without thinking.", category: 3, reverse: true },
+    { text: "I read the terms and conditions (at least partially) before agreeing to important apps or services.", category: 3, reverse: false },
+    { text: "I often skip safety warnings because I think 'it won't happen to me'.", category: 3, reverse: true },
+    { text: "I prefer building a skill slowly through practice rather than relying on a shortcut that might not last.", category: 3, reverse: false },
+    { text: "I tend to spend first and worry about the consequences later.", category: 3, reverse: true },
+    { text: "When I borrow something from someone, I always return it in the same or better condition.", category: 3, reverse: false },
+    { text: "I make promises I'm not sure I can keep just to avoid conflict in the moment.", category: 3, reverse: true },
+    { text: "I always follow the queue or proper process, even when I could get away with cutting in.", category: 3, reverse: false },
+    { text: "I have exaggerated or bent the truth to get a better deal or avoid trouble.", category: 3, reverse: true },
+    { text: "I complete tasks the right way even when no one is watching or checking.", category: 3, reverse: false },
+    { text: "When a 'guaranteed return' investment is advertised, I get excited and want to try it immediately.", category: 3, reverse: true },
+    { text: "I double-check my work before submitting, even when I'm confident it's correct.", category: 3, reverse: false },
+    { text: "I look for loopholes or workarounds when I find the rules inconvenient.", category: 3, reverse: true },
+
+    // Cat 4: Crisis Preparation
+    { text: "I always leave 10-15 minutes early for plans to account for unexpected delays like traffic.", category: 4, reverse: false },
+    { text: "I usually just think 'it'll work out' and never make a 'Plan B' for trips or weekend plans.", category: 4, reverse: true },
+    { text: "If the weather forecast says it might rain, I always bring an umbrella even if it's a hassle to carry.", category: 4, reverse: false },
+    { text: "If I have money in my account, I spend it all, assuming I won't have any emergencies tomorrow.", category: 4, reverse: true },
+    { text: "When I get money, I always save a certain amount just in case I need it unexpectedly.", category: 4, reverse: false },
+    { text: "On the night before an exam, I overestimate my stamina and make unreasonable plans like 'I can stay up all night and finish studying.'", category: 4, reverse: true },
+    { text: "Before going on a trip, I research backup transportation or accommodation options in case the first plan falls through.", category: 4, reverse: false },
+    { text: "I only charge my phone when it hits 0% because I assume I'll always have a charger nearby.", category: 4, reverse: true },
+    { text: "I keep important documents (IDs, tickets, prescriptions) in an organized place so I can find them quickly if needed.", category: 4, reverse: false },
+    { text: "I rarely think about what I would do if I suddenly lost access to money or my phone for a day.", category: 4, reverse: true },
+    { text: "Before a big event, I mentally walk through what could go wrong and prepare for it.", category: 4, reverse: false },
+    { text: "I tend to underestimate how long tasks take and end up rushing at the last minute.", category: 4, reverse: true },
+    { text: "I keep a small emergency fund or reserve that I do not touch for everyday spending.", category: 4, reverse: false },
+    { text: "I assume technology will always work and don't have a backup plan when it fails.", category: 4, reverse: true },
+    { text: "I check expiry dates, battery levels, and stock levels of important items before I run out.", category: 4, reverse: false },
+    { text: "I often end up in stressful situations because I didn't plan far enough ahead.", category: 4, reverse: true },
+    { text: "I would know exactly what to do in a minor emergency (lost wallet, missed flight, power cut).", category: 4, reverse: false },
+    { text: "I rely on things going perfectly, so I rarely consider what happens if they don't.", category: 4, reverse: true }
+];
+
+// ═══════════════════════════════════════════════════════
+// DATA — STAGE 2 (12 lifestyle scenarios)
+// ═══════════════════════════════════════════════════════
+const scenariosDB = [
+    {
+        emoji: "🎢", trait: "Risk Tolerance",
+        text: "Your friends want to go to an amusement park and head straight for the biggest, most intense roller coaster. What do you do?",
+        options: [
+            { label: "Sprint to the front of the line — the bigger the drop, the better.", points: { growth: 3, balanced: 0, stable: 0, safe: 0 } },
+            { label: "Go for it if friends are going — a little nervous but excited.", points: { growth: 0, balanced: 3, stable: 0, safe: 0 } },
+            { label: "Suggest a medium-intensity ride instead — still fun but manageable.", points: { growth: 0, balanced: 0, stable: 3, safe: 0 } },
+            { label: "Wait at the bottom and cheer them on — not really your thing.", points: { growth: 0, balanced: 0, stable: 0, safe: 3 } }
+        ]
+    },
+    {
+        emoji: "💸", trait: "Loss Aversion",
+        text: "You saved up $80 for months to enter a raffle for limited-edition sneakers. You didn't win. How do you feel?",
+        options: [
+            { label: "Worth the shot — I'd enter again next time without hesitation.", points: { growth: 3, balanced: 0, stable: 0, safe: 0 } },
+            { label: "A bit bummed, but I knew the risk going in. Life goes on.", points: { growth: 0, balanced: 3, stable: 0, safe: 0 } },
+            { label: "Pretty upset. I wish I had just bought something guaranteed.", points: { growth: 0, balanced: 0, stable: 3, safe: 0 } },
+            { label: "I'd never do that again. Losing that money really stings.", points: { growth: 0, balanced: 0, stable: 0, safe: 3 } }
+        ]
+    },
+    {
+        emoji: "⏳", trait: "Patience",
+        text: "You start a new workout routine your coach says takes 3 months to show real results. After 3 weeks, you see almost no change. What happens?",
+        options: [
+            { label: "Keep going without a second thought — I trust the process.", points: { growth: 3, balanced: 0, stable: 0, safe: 0 } },
+            { label: "Stay consistent but research if there's anything I can tweak.", points: { growth: 0, balanced: 3, stable: 0, safe: 0 } },
+            { label: "Start doubting it and look for a faster alternative.", points: { growth: 0, balanced: 0, stable: 3, safe: 0 } },
+            { label: "Quit and try something that shows quicker results.", points: { growth: 0, balanced: 0, stable: 0, safe: 3 } }
+        ]
+    },
+    {
+        emoji: "📱", trait: "FOMO Resistance",
+        text: "Everyone in your grade suddenly starts using a new social media app. You try it and find it kind of boring. What do you do?",
+        options: [
+            { label: "Delete it immediately — my time is better spent elsewhere.", points: { growth: 3, balanced: 0, stable: 0, safe: 0 } },
+            { label: "Keep it installed but barely use it — I won't force myself.", points: { growth: 0, balanced: 3, stable: 0, safe: 0 } },
+            { label: "Use it occasionally so I don't feel totally out of the loop.", points: { growth: 0, balanced: 0, stable: 3, safe: 0 } },
+            { label: "Use it regularly — I don't want to miss out on what everyone's talking about.", points: { growth: 0, balanced: 0, stable: 0, safe: 3 } }
+        ]
+    },
+    {
+        emoji: "🏆", trait: "Crowd Resistance",
+        text: "Your whole friend group is convinced a new restaurant is the best in town. You looked it up and the reviews look average. What do you do?",
+        options: [
+            { label: "Skip it and suggest somewhere I actually researched — I trust my own judgement.", points: { growth: 3, balanced: 0, stable: 0, safe: 0 } },
+            { label: "Go but mention my concerns — I'm open to being wrong.", points: { growth: 0, balanced: 3, stable: 0, safe: 0 } },
+            { label: "Go along without saying anything — maybe they know something I don't.", points: { growth: 0, balanced: 0, stable: 3, safe: 0 } },
+            { label: "Go enthusiastically — if everyone likes it, it's probably good.", points: { growth: 0, balanced: 0, stable: 0, safe: 3 } }
+        ]
+    },
+    {
+        emoji: "📉", trait: "Volatility Tolerance",
+        text: "You've been training hard for months for a big competition. Two weeks before, you have your worst practice session ever. How do you react?",
+        options: [
+            { label: "Shake it off completely — one bad day means nothing in the long run.", points: { growth: 3, balanced: 0, stable: 0, safe: 0 } },
+            { label: "Analyze what went wrong and adjust — it's useful data.", points: { growth: 0, balanced: 3, stable: 0, safe: 0 } },
+            { label: "Feel shaken and seriously question whether I'm ready.", points: { growth: 0, balanced: 0, stable: 3, safe: 0 } },
+            { label: "Consider withdrawing — why risk embarrassing myself?", points: { growth: 0, balanced: 0, stable: 0, safe: 3 } }
+        ]
+    },
+    {
+        emoji: "🎯", trait: "Long-term Orientation",
+        text: "You have $200 to spend. Option A: buy something you really want right now. Option B: put it toward a trip you've been planning for next summer.",
+        options: [
+            { label: "Option B without hesitation — future me will be way happier.", points: { growth: 3, balanced: 0, stable: 0, safe: 0 } },
+            { label: "Option B, but I feel a little wistful about the immediate thing.", points: { growth: 0, balanced: 3, stable: 0, safe: 0 } },
+            { label: "Split it — $100 now, $100 toward the trip.", points: { growth: 0, balanced: 0, stable: 3, safe: 0 } },
+            { label: "Option A — the trip feels too far away and uncertain.", points: { growth: 0, balanced: 0, stable: 0, safe: 3 } }
+        ]
+    },
+    {
+        emoji: "🛒", trait: "Impulse Control",
+        text: "You're out with friends and see a limited-edition item you weren't planning to buy. It's $60 — about half your monthly budget. What do you do?",
+        options: [
+            { label: "Walk away easily — unplanned spending isn't my style.", points: { growth: 3, balanced: 0, stable: 0, safe: 0 } },
+            { label: "Think about it for a few minutes, then decide based on whether I really need it.", points: { growth: 0, balanced: 3, stable: 0, safe: 0 } },
+            { label: "Buy it, but feel a bit guilty about it afterward.", points: { growth: 0, balanced: 0, stable: 3, safe: 0 } },
+            { label: "Buy it immediately — limited edition means I might regret not getting it.", points: { growth: 0, balanced: 0, stable: 0, safe: 3 } }
+        ]
+    },
+    {
+        emoji: "🌫️", trait: "Uncertainty Tolerance",
+        text: "Your group is planning a weekend camping trip but the weather forecast is uncertain. What's your vote?",
+        options: [
+            { label: "Go for it — uncertainty is part of the adventure.", points: { growth: 3, balanced: 0, stable: 0, safe: 0 } },
+            { label: "Go, but pack extra gear just in case it rains.", points: { growth: 0, balanced: 3, stable: 0, safe: 0 } },
+            { label: "Suggest waiting until the forecast is clearer before deciding.", points: { growth: 0, balanced: 0, stable: 3, safe: 0 } },
+            { label: "Suggest switching to an indoor activity — why risk a ruined weekend?", points: { growth: 0, balanced: 0, stable: 0, safe: 3 } }
+        ]
+    },
+    {
+        emoji: "😬", trait: "Regret Avoidance",
+        text: "You chose not to audition for the school play. Someone who did auditioned got the lead role and is having an amazing time. How do you feel?",
+        options: [
+            { label: "Fine — I made the best decision I could at the time.", points: { growth: 3, balanced: 0, stable: 0, safe: 0 } },
+            { label: "A small pang of 'what if' but I move on quickly.", points: { growth: 0, balanced: 3, stable: 0, safe: 0 } },
+            { label: "Pretty regretful — I keep thinking about what could have been.", points: { growth: 0, balanced: 0, stable: 3, safe: 0 } },
+            { label: "Very regretful — I should have just tried regardless of the outcome.", points: { growth: 0, balanced: 0, stable: 0, safe: 3 } }
+        ]
+    },
+    {
+        emoji: "⚖️", trait: "Opportunity Cost Awareness",
+        text: "You spend every Saturday gaming for 5 hours. A friend mentions they've been using that time to learn video editing and just got their first paid gig. How do you react?",
+        options: [
+            { label: "Inspired — I immediately think about what skill I could build in that time.", points: { growth: 3, balanced: 0, stable: 0, safe: 0 } },
+            { label: "Interested — I think about it seriously but don't rush to change.", points: { growth: 0, balanced: 3, stable: 0, safe: 0 } },
+            { label: "A little envious but I value my downtime and keep things as is.", points: { growth: 0, balanced: 0, stable: 3, safe: 0 } },
+            { label: "Good for them — I'm happy with what I'm doing.", points: { growth: 0, balanced: 0, stable: 0, safe: 3 } }
+        ]
+    },
+    {
+        emoji: "🔒", trait: "Safety Margin Preference",
+        text: "You're planning to cycle to a friend's place across town — about 45 minutes away. How do you prepare?",
+        options: [
+            { label: "Just hop on and go — I know the general direction.", points: { growth: 3, balanced: 0, stable: 0, safe: 0 } },
+            { label: "Check the route quickly and make sure my phone is charged.", points: { growth: 0, balanced: 3, stable: 0, safe: 0 } },
+            { label: "Plan the route, charge the phone, and tell someone where I'm going.", points: { growth: 0, balanced: 0, stable: 3, safe: 0 } },
+            { label: "Plan everything in detail, pack water and a repair kit, share my live location.", points: { growth: 0, balanced: 0, stable: 0, safe: 3 } }
+        ]
+    }
+];
+
+// ═══════════════════════════════════════════════════════
+// ETF TIERS
+// ═══════════════════════════════════════════════════════
+const TIERS = [
+    { key: 'growth',   label: 'Growth',   color: '#1a3a5c', tickers: [
+        { ticker: 'QQQM', desc: 'Invesco Nasdaq-100 (retail ver.)' },
+        { ticker: 'SPYG', desc: 'SPDR S&P 500 Growth ETF' },
+        { ticker: 'VUG',  desc: 'Vanguard Growth ETF' },
+        { ticker: 'SCHG', desc: 'Schwab U.S. Large-Cap Growth' },
+        { ticker: 'MGK',  desc: 'Vanguard Mega Cap Growth ETF' },
+    ]},
+    { key: 'balanced', label: 'Balanced', color: '#2e8b6e', tickers: [
+        { ticker: 'VOO',  desc: 'Vanguard S&P 500 ETF' },
+        { ticker: 'SPYM', desc: 'SPDR Portfolio S&P 500 ETF' },
+        { ticker: 'VIG',  desc: 'Vanguard Dividend Appreciation' },
+        { ticker: 'SCHD', desc: 'Schwab U.S. Dividend Equity' },
+        { ticker: 'VTI',  desc: 'Vanguard Total Stock Market' },
+    ]},
+    { key: 'stable',   label: 'Stable',   color: '#e8a020', tickers: [
+        { ticker: 'DIA',  desc: 'SPDR Dow Jones Industrial Avg' },
+        { ticker: 'AOM',  desc: 'iShares Core Moderate Allocation' },
+        { ticker: 'BND',  desc: 'Vanguard Total Bond Market' },
+        { ticker: 'AOK',  desc: 'iShares Core Conservative Alloc.' },
+        { ticker: 'IGSB', desc: 'iShares 1-5Y Investment Grade Bond' },
+    ]},
+    { key: 'safe',     label: 'Safe',     color: '#8b2e6e', tickers: [
+        { ticker: 'SHV',  desc: 'iShares Short Treasury Bond' },
+        { ticker: 'SGOV', desc: 'iShares 0-3 Month Treasury Bond' },
+        { ticker: 'BIL',  desc: 'SPDR Bloomberg 1-3M T-Bill' },
+        { ticker: 'ICSH', desc: 'iShares Ultra Short-Term Bond' },
+        { ticker: 'MINT', desc: 'PIMCO Enhanced Short Maturity' },
+    ]}
+];
+
+const CATEGORY_NAMES = { 1: 'Goal Persistence', 2: 'Independent Mindset', 3: 'Principle Adherence', 4: 'Crisis Preparation' };
+
+// ═══════════════════════════════════════════════════════
+// CONTENT TABLES
+// ═══════════════════════════════════════════════════════
+
+// Mindset score tiers
+function getMindsetContent(pct, catScores) {
+    // Find the weakest category (score 6–30)
+    const weakCat = Object.entries(catScores).reduce((a, b) => catScores[a[0]] < catScores[b[0]] ? a : b);
+    const weakName = CATEGORY_NAMES[weakCat[0]];
+    const weakKey = parseInt(weakCat[0]);
+
+    // Daily-life actions tailored to each weak category
+    const dailyActions = {
+        1: `Your weakest habit is Goal Persistence. Here's how to train it in daily life: Pick one thing you already do — studying, working out, a hobby — and commit to doing it for 10 minutes every single day for 30 days, no skipping. Don't start a new goal; use something existing. Each day you complete it, mark it on a paper calendar. The goal is the unbroken chain. When you feel like skipping, do the 10 minutes anyway, even badly. This one habit, repeated consistently, rewires how your brain handles long-term commitments.`,
+        2: `Your weakest habit is Independent Mindset. Here's how to train it in daily life: This week, make three small decisions purely based on your own preference — what to eat, what music to listen to, what to study first — without asking anyone or checking what others are doing. Then notice how it feels. Next, before agreeing with any opinion from a friend or social media, pause and ask yourself: "Do I actually believe this, or am I just going along with it?" Write down one opinion per day that is genuinely yours, not borrowed from someone else.`,
+        3: `Your weakest habit is Principle Adherence. Here's how to train it in daily life: For the next two weeks, choose one rule you tend to bend when it's inconvenient — submitting work on time, not cheating on small things, following through on promises — and stick to it with zero exceptions. Every time you're tempted to cut a corner, write down what you were about to do and why you chose not to. This builds the "integrity muscle" that stops impulsive, regrettable decisions under pressure.`,
+        4: `Your weakest habit is Crisis Preparation. Here's how to train it in daily life: Start a simple "buffer habit" — every time you receive money (allowance, a gift, part-time pay), put 10% of it aside in a separate envelope or account and do not touch it. Then, once a week, spend 5 minutes thinking about one thing that could go wrong that week (an exam, a plan falling through, running out of something) and decide in advance what you'd do. These two micro-habits — a financial buffer and a mental Plan B — are the exact same skills that protect investors from panic.`
+    };
+
+    if (pct >= 75) return {
+        title: "Strong Investor Mindset",
+        subtitle: "You have the psychological foundations that long-term investors rely on.",
+        meaning: `A score above 75% means your daily habits already mirror the discipline successful investors use. You think in systems, not impulses — you're comfortable with delayed gratification, you don't need external validation to feel confident, and you naturally prepare for uncertainty. In investing terms, this translates to the ability to hold positions through market downturns without panic-selling, to make independent decisions when others are running scared, and to stick to a plan even when it feels slow.`,
+        criticism: `Even strong mindsets have blind spots. Your weakest area is ${weakName} — this is the most likely place where stress or emotion could override your discipline when it matters most. High scores in a quiz don't always hold up in real high-pressure situations.`,
+        action: dailyActions[weakKey]
+    };
+
+    if (pct >= 50) return {
+        title: "Developing Investor Mindset",
+        subtitle: "You have solid foundations but some habits still need strengthening.",
+        meaning: `A score in the 50–74% range means you have genuine strengths — but they're inconsistent. You understand the value of patience and planning in some areas of life, but under pressure or in unfamiliar situations, you may still default to short-term thinking. The most successful long-term investors aren't the smartest people in the room — they're the ones whose daily habits keep emotions out of their decisions 99% of the time.`,
+        criticism: `Your biggest gap is ${weakName}. This inconsistency is the most likely source of future regret — not because you made the wrong plan, but because a moment of stress or peer pressure caused you to abandon a good one.`,
+        action: dailyActions[weakKey]
+    };
+
+    return {
+        title: "Early-Stage Mindset",
+        subtitle: "Your current habits suggest the foundations still need work — and that's completely fine.",
+        meaning: `A score below 50% doesn't mean you can't succeed financially — it means the daily habits that make long-term planning sustainable aren't fully formed yet. This is normal at your age. The good news is that these habits are completely learnable, and starting now puts you years ahead of most people who only think about this stuff in their 20s or 30s.`,
+        criticism: `Your weakest area right now is ${weakName}. This is the habit gap most likely to cause problems down the road — not just in investing, but in any long-term goal you set. The pattern of giving in to short-term impulses or outside pressure is the single most common reason people fail to build wealth, regardless of how much they earn.`,
+        action: dailyActions[weakKey]
+    };
+}
+
+// Portfolio tier content
+function getPortfolioContent(dominant) {
+    const contents = {
+        growth: {
+            subtitle: "Your gut instincts lean toward high-growth, high-risk assets. You're comfortable with big swings as long as the long-term direction is up.",
+            meaning: "A Growth-heavy portfolio means you're optimizing for maximum long-term return and are willing to accept significant short-term volatility to get there. Growth ETFs like QQQM and SPYG track technology-heavy indices that can fall 30–40% in a bad year — but have historically recovered and gone on to new highs. This portfolio suits someone who won't check their account every day and won't panic when numbers turn red.",
+            criticism: "The risk of a Growth-heavy allocation is overconfidence. Your scenario answers suggest you're naturally comfortable with risk — but comfort in everyday life doesn't always translate to comfort when you watch your actual money drop by 25% in a month. Growth portfolios require iron discipline not to sell at the worst moment."
+        },
+        balanced: {
+            subtitle: "Your instincts favor participation in market growth without taking on extreme risk. You want upside — but not at the cost of your peace of mind.",
+            meaning: "A Balanced portfolio centers around broad S&P 500 exposure and dividend-growing companies. This is arguably the most evidence-backed approach for most long-term investors — diversified, battle-tested, and forgiving of mistakes. ETFs like VOO and SCHD provide steady growth with less dramatic swings than pure growth funds.",
+            criticism: "The risk of a Balanced approach is complacency. Because this portfolio rarely causes panic, you might ignore it entirely — which is usually fine, but it also means you may miss signals to rebalance or adjust your allocation as your life circumstances change. Balanced portfolios still require annual check-ins."
+        },
+        stable: {
+            subtitle: "Your instincts favor predictability over maximum returns. You'd rather sleep well at night than chase big gains.",
+            meaning: "A Stable portfolio blends blue-chip equities with bonds. This reduces volatility significantly — a bad market year might cost you 10–15% instead of 30–40%. The tradeoff is that your long-term growth will be slower. ETFs like DIA and BND are built for people who need their capital to be relatively accessible and who can't afford large drawdowns.",
+            criticism: "The risk of a Stable-heavy portfolio for a teenager or young adult is being too conservative too early. At your age, time is your biggest asset — and a Stable allocation may cost you significant compounding growth over a 20–30 year horizon. The volatility you're avoiding now could actually be your greatest wealth-building tool."
+        },
+        safe: {
+            subtitle: "Your instincts strongly prefer capital preservation. Losing money feels much worse than missing out on gains.",
+            meaning: "A Safe portfolio focuses on short-term treasury bonds and money-market instruments — essentially the closest thing to guaranteed capital preservation in the market. These instruments barely outpace inflation. For someone still building financial habits, this is an honest and sensible starting point.",
+            criticism: "The risk of a Safe-heavy allocation is that it's not actually investing — it's storing money at a slightly better rate than a savings account. Over 20–30 years, a Safe-only portfolio will likely lose purchasing power to inflation. This allocation is best used as a temporary base while you build the mindset and habits needed to tolerate more risk."
+        }
+    };
+    return contents[dominant];
+}
+
+// Combined analysis
+function getCombinedContent(mindsetPct, dominantKey) {
+    const isAggressive = dominantKey === 'growth' || dominantKey === 'balanced';
+    const isMindsetStrong = mindsetPct >= 60;
+
+    // 4 possible combinations
+    if (isMindsetStrong && isAggressive) return {
+        aligned: true,
+        text: "Your mindset score and portfolio profile are well-aligned. Your daily habits show the discipline and independent thinking that long-term financial success requires, and your instincts naturally lean toward taking calculated risks for bigger payoffs. This is a strong combination to build on.",
+        actions: [
+            "Practice delayed gratification with your own money right now: every time you receive allowance or income, immediately set aside 20% in a separate envelope or bank account. Don't touch it for 3 months. This trains the exact 'hold and don't react' muscle that growth investors need.",
+            "When you want to buy something on impulse, wait 48 hours first. If you still want it after 48 hours, buy it. If not, put that money into your savings. Track how many times the urge fades — this is the same skill that stops panic-selling.",
+            "Once a month, pick a topic you know little about — a company, an industry, a world event — and spend 30 minutes researching it from at least two different sources before forming an opinion. This builds the independent research habit that separates good investors from crowd followers."
+        ]
+    };
+
+    if (isMindsetStrong && !isAggressive) return {
+        aligned: false,
+        text: "Interesting mismatch: your daily habits suggest you're more disciplined and resilient than your gut instincts reveal. Your mindset score is strong, but your natural reactions in uncertain situations tend toward caution. This isn't a problem — it just means your habits are ahead of your confidence. The goal is to close that gap.",
+        actions: [
+            "Challenge yourself to intentionally choose the slightly riskier option in low-stakes daily decisions — try a food you've never had, take a different route home, join a club you're unsure about. This gradually builds your comfort with uncertainty in a safe environment.",
+            "Keep a 'decision journal' for one month. Every day, write down one decision you made and whether you chose the comfortable/safe option or the uncertain/growth option. At the end of the month, look for patterns — you may be more risk-averse in specific situations than others.",
+            "The next time you're about to go along with what everyone else is doing, pause and ask: 'What would I choose if I couldn't see what anyone else chose?' Then do that. This one practice, repeated daily, is how independent thinking becomes natural."
+        ]
+    };
+
+    if (!isMindsetStrong && isAggressive) return {
+        aligned: false,
+        text: "Important mismatch: your instincts lean toward bold, aggressive choices — but your daily habits suggest the discipline to follow through on long-term commitments isn't fully built yet. This combination is the most common reason young people make financial mistakes: the appetite for big wins without the habits to stay calm when things go wrong.",
+        actions: [
+            "Pick one thing in your life right now that you've been meaning to do consistently but haven't — studying at a set time, working out, finishing assignments early — and commit to it every day for 21 days. No exceptions. The specific task doesn't matter. Building the 'I finish what I start' habit is the most important thing you can do right now.",
+            "When you feel a strong impulse to do something exciting or different, write it down instead of acting on it immediately. Wait 24 hours. Then decide. This 24-hour rule is a concrete daily habit that prevents the impulsive decisions that hurt long-term goals.",
+            "Start tracking every dollar you spend for 30 days — not to budget, just to observe. Most people are shocked by what they see. Awareness of your own spending patterns is the first step to understanding how emotions drive your financial decisions."
+        ]
+    };
+
+    // !isMindsetStrong && !isAggressive
+    return {
+        aligned: true,
+        text: "Your mindset score and portfolio profile are consistent — both show a preference for security and predictability over risk and uncertainty. This is a completely valid starting point, and being honest with yourself about where you are is the most important first step. The goal now is to gradually build the habits that will give you more options in the future.",
+        actions: [
+            "Start the simplest possible saving habit: every week, take 10% of whatever money you have and put it somewhere separate — a different bank account, a jar, an envelope. Don't think about what it's for. Just build the habit of consistently setting money aside. Do this for 8 weeks straight without breaking the streak.",
+            "Once a week, read one short article about how money or markets work — not to memorize anything, just to get comfortable with the topic. The goal is to make financial concepts feel less foreign and scary over time. Try sources like 'Investopedia' for simple explanations.",
+            "Identify the one area from Part 1 where you scored lowest and set a specific 2-week challenge around it. For example, if you tend to follow the crowd, spend two weeks making every small daily decision — what to eat, what to watch, what to wear — without asking anyone else's opinion first."
+        ]
+    };
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function pickQuestions(perCategory) {
+    const picked = [];
+    for (let cat = 1; cat <= 4; cat++) {
+        const pool = shuffle(questionsDB.filter(q => q.category === cat));
+        picked.push(...pool.slice(0, perCategory));
+    }
+    return shuffle(picked);
+}
+
+let currentQuestions = [];
+let currentScenarios = [];
+
+// ═══════════════════════════════════════════════════════
+// STAGE 1
+// ═══════════════════════════════════════════════════════
+function renderStage1() {
+    const container = document.getElementById('quiz-container');
+    container.innerHTML = '';
+    currentQuestions = pickQuestions(6);
+
+    currentQuestions.forEach((q, index) => {
+        const card = document.createElement('div');
+        card.className = 'question-card';
+        card.id = `card1-${index}`;
+        card.style.animationDelay = `${index * 0.025}s`;
+        card.innerHTML = `
+            <div class="question-meta">
+                <span class="q-number">Q${index + 1}</span>
+            </div>
+            <div class="question-text">${q.text}</div>
+            <div class="scale-labels"><span>1 — Strongly Disagree</span><span>5 — Strongly Agree</span></div>
+            <div class="radio-row">
+                ${[1,2,3,4,5].map(v => `
+                    <div class="radio-option">
+                        <input type="radio" name="q1_${index}" id="q1_${index}_v${v}" value="${v}">
+                        <label for="q1_${index}_v${v}">${v}</label>
+                    </div>
+                `).join('')}
+            </div>`;
+        card.querySelectorAll('input[type="radio"]').forEach(r => {
+            r.addEventListener('change', () => { card.classList.add('answered'); card.classList.remove('unanswered-error'); updateProgress1(); });
+        });
+        container.appendChild(card);
+    });
+    updateProgress1();
+}
+
+function updateProgress1() {
+    const total = currentQuestions.length;
+    const answered = currentQuestions.filter((_, i) => document.querySelector(`input[name="q1_${i}"]:checked`)).length;
+    document.getElementById('progress-bar-1').style.width = `${(answered / total) * 100}%`;
+    document.getElementById('progress-label-1').textContent = `${answered} / ${total} answered`;
+}
+
+function submitStage1() {
+    const unanswered = currentQuestions.map((_, i) => document.querySelector(`input[name="q1_${i}"]:checked`) ? null : i).filter(i => i !== null);
+    if (unanswered.length > 0) {
+        unanswered.forEach(i => document.getElementById(`card1-${i}`).classList.add('unanswered-error'));
+        alert(`Please answer all questions. (${unanswered.length} remaining)`);
+        document.getElementById(`card1-${unanswered[0]}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    document.getElementById('circle-1').classList.replace('active', 'done');
+    document.getElementById('circle-1').textContent = '✓';
+    document.getElementById('circle-2').classList.add('active');
+    document.getElementById('stage1-section').style.display = 'none';
+    document.getElementById('stage2-section').style.display = 'block';
+    renderStage2();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════════════════════
+// STAGE 2
+// ═══════════════════════════════════════════════════════
+function renderStage2() {
+    const container = document.getElementById('scenario-container');
+    container.innerHTML = '';
+    currentScenarios = shuffle([...scenariosDB]);
+    const letters = ['A', 'B', 'C', 'D'];
+
+    currentScenarios.forEach((s, index) => {
+        const card = document.createElement('div');
+        card.className = 'scenario-card';
+        card.id = `card2-${index}`;
+        card.style.animationDelay = `${index * 0.04}s`;
+        const shuffledOptions = shuffle(s.options.map(o => ({ ...o })));
+        card.innerHTML = `
+            <div class="question-meta">
+                <span class="q-number">Q${index + 1}</span>
+            </div>
+            <div class="scenario-emoji">${s.emoji}</div>
+            <div class="scenario-text">${s.text}</div>
+            <div class="scenario-options">
+                ${shuffledOptions.map((opt, li) => `
+                    <div class="scenario-option">
+                        <input type="radio" name="q2_${index}" id="q2_${index}_${li}" value="${li}" data-points='${JSON.stringify(opt.points)}'>
+                        <label for="q2_${index}_${li}"><span class="option-letter">${letters[li]}</span>${opt.label}</label>
+                    </div>`).join('')}
+            </div>`;
+        card.querySelectorAll('input[type="radio"]').forEach(r => {
+            r.addEventListener('change', () => { card.classList.add('answered'); card.classList.remove('unanswered-error'); updateProgress2(); });
+        });
+        container.appendChild(card);
+    });
+    updateProgress2();
+}
+
+function updateProgress2() {
+    const total = currentScenarios.length;
+    const answered = currentScenarios.filter((_, i) => document.querySelector(`input[name="q2_${i}"]:checked`)).length;
+    document.getElementById('progress-bar-2').style.width = `${(answered / total) * 100}%`;
+    document.getElementById('progress-label-2').textContent = `${answered} / ${total} answered`;
+}
+
+// ═══════════════════════════════════════════════════════
+// RESULTS
+// ═══════════════════════════════════════════════════════
+function submitStage2() {
+    const unanswered = currentScenarios.map((_, i) => document.querySelector(`input[name="q2_${i}"]:checked`) ? null : i).filter(i => i !== null);
+    if (unanswered.length > 0) {
+        unanswered.forEach(i => document.getElementById(`card2-${i}`).classList.add('unanswered-error'));
+        alert(`Please answer all questions. (${unanswered.length} remaining)`);
+        document.getElementById(`card2-${unanswered[0]}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    // ── Stage 1 tally ──
+    let totalScore = 0;
+    const catScores = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    currentQuestions.forEach((q, i) => {
+        const raw = parseInt(document.querySelector(`input[name="q1_${i}"]:checked`).value);
+        const val = q.reverse ? (6 - raw) : raw;
+        totalScore += val;
+        catScores[q.category] += val;
+    });
+    // Normalize [24,120] → [0,100] with 1 decimal
+    const mindsetPct = parseFloat(((totalScore - 24) / 96 * 100).toFixed(1));
+
+    // ── Stage 2 tally ──
+    const portfolio = { growth: 0, balanced: 0, stable: 0, safe: 0 };
+    currentScenarios.forEach((_, i) => {
+        const pts = JSON.parse(document.querySelector(`input[name="q2_${i}"]:checked`).dataset.points);
+        Object.keys(pts).forEach(k => portfolio[k] += pts[k]);
+    });
+    const totalPts = Object.values(portfolio).reduce((a, b) => a + b, 0);
+    const alloc = {};
+    TIERS.forEach(t => { alloc[t.key] = parseFloat((portfolio[t.key] / totalPts * 100).toFixed(1)); });
+    const dominant = TIERS.reduce((a, b) => alloc[a.key] > alloc[b.key] ? a : b);
+
+    // ── Render mindset banner ──
+    const mc = getMindsetContent(mindsetPct, catScores);
+    document.getElementById('score-badge').textContent = `${mindsetPct}%`;
+    document.getElementById('mindset-title').textContent = mc.title;
+    document.getElementById('mindset-subtitle').textContent = mc.subtitle;
+    document.getElementById('mindset-meaning').textContent = mc.meaning;
+    document.getElementById('mindset-criticism').textContent = mc.criticism;
+    document.getElementById('mindset-action').textContent = mc.action;
+
+    // ── Render category cards ──
+    const CAT_MIN = 6, CAT_MAX = 30;
+    function renderCat(cat, score) {
+        const barPct = Math.round(((score - CAT_MIN) / (CAT_MAX - CAT_MIN)) * 100);
+        document.getElementById(`bar-cat${cat}`).style.width = `${barPct}%`;
+        document.getElementById(`label-cat${cat}`).textContent = `${score} / 30 pts`;
+        let fb = '';
+        if (cat === 1) {
+            if (score >= 24) fb = "Excellent patience. You stick to long-term plans without rushing for immediate gratification.";
+            else if (score >= 16) fb = "Decent persistence, but you sometimes get impatient when results are slow.";
+            else fb = "You tend to seek quick results and give up easily. Finishing what you start will make a big difference.";
+        } else if (cat === 2) {
+            if (score >= 24) fb = "Strong independent mindset. Decisions based on your own values, not trends.";
+            else if (score >= 16) fb = "Generally independent, but occasional peer pressure influences your choices.";
+            else fb = "Heavily influenced by trends and others' opinions. Practice deciding based on what you actually need.";
+        } else if (cat === 3) {
+            if (score >= 24) fb = "You prefer doing things the right way, steadily building up rather than taking shortcuts.";
+            else if (score >= 16) fb = "You generally follow the rules, but might be tempted by quick fixes under pressure.";
+            else fb = "You tend to look for easy ways out. Discipline and proper procedure are crucial for sustainable growth.";
+        } else {
+            if (score >= 24) fb = "Great forward-thinking. You leave safety margins for unexpected events.";
+            else if (score >= 16) fb = "You plan ahead somewhat, but often leave yourself exposed to sudden changes.";
+            else fb = "You rely too much on everything going perfectly. Build a habit of keeping a buffer for emergencies.";
+        }
+        document.getElementById(`desc-cat${cat}`).textContent = fb;
+    }
+    for (let cat = 1; cat <= 4; cat++) renderCat(cat, catScores[cat]);
+
+    // ── Render portfolio ──
+    const pc = getPortfolioContent(dominant.key);
+    document.getElementById('portfolio-subtitle').textContent = pc.subtitle;
+    document.getElementById('portfolio-meaning').textContent = pc.meaning;
+    document.getElementById('portfolio-criticism').textContent = pc.criticism;
+
+    renderDonut(alloc);
+
+    const allocList = document.getElementById('alloc-list');
+    allocList.innerHTML = '';
+    TIERS.forEach(t => {
+        const pct = alloc[t.key];
+        const row = document.createElement('div');
+        row.className = 'alloc-row';
+        row.innerHTML = `
+            <div class="alloc-row-header">
+                <div class="alloc-tier-name"><div class="alloc-dot" style="background:${t.color}"></div>${t.label}</div>
+                <div class="alloc-pct">${pct}%</div>
+            </div>
+            <div class="alloc-bar-wrap"><div class="alloc-bar" style="background:${t.color}; width:0%" data-width="${pct}"></div></div>
+            <div class="alloc-tickers">${t.tickers.map(tk => `<span class="alloc-ticker" style="background:${t.color}" title="${tk.desc}">${tk.ticker}</span>`).join('')}</div>`;
+        allocList.appendChild(row);
+    });
+    setTimeout(() => document.querySelectorAll('.alloc-bar').forEach(b => b.style.width = b.dataset.width + '%'), 100);
+
+    // ── Render combined analysis ──
+    const cc = getCombinedContent(mindsetPct, dominant.key);
+    const badge = document.getElementById('match-badge');
+    badge.textContent = cc.aligned ? 'Aligned ✓' : 'Mismatch ⚠️';
+    badge.className = `match-badge ${cc.aligned ? 'aligned' : 'mismatched'}`;
+    document.getElementById('combined-text').textContent = cc.text;
+    document.getElementById('combined-actions').innerHTML = cc.actions.map(a => `<div class="action-item">${a}</div>`).join('');
+
+    // ── Stage indicator ──
+    document.getElementById('circle-2').classList.replace('active', 'done');
+    document.getElementById('circle-2').textContent = '✓';
+    document.getElementById('circle-3').classList.add('active');
+
+    document.getElementById('stage2-section').style.display = 'none';
+    document.getElementById('result-section').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════════════════════
+// DONUT CHART
+// ═══════════════════════════════════════════════════════
+function renderDonut(alloc) {
+    const svg = document.getElementById('donut-svg');
+    svg.innerHTML = '';
+    const cx = 50, cy = 50, r = 38, stroke = 14;
+    const circumference = 2 * Math.PI * r;
+    let offset = 0;
+    TIERS.forEach(t => {
+        const pct = alloc[t.key] / 100;
+        const dash = pct * circumference;
+        const gap  = circumference - dash;
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', cx); circle.setAttribute('cy', cy); circle.setAttribute('r', r);
+        circle.setAttribute('fill', 'none'); circle.setAttribute('stroke', t.color);
+        circle.setAttribute('stroke-width', stroke);
+        circle.setAttribute('stroke-dasharray', `${dash} ${gap}`);
+        circle.setAttribute('stroke-dashoffset', -offset);
+        svg.appendChild(circle);
+        offset += dash;
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+// RETRY
+// ═══════════════════════════════════════════════════════
+function retryQuiz() {
+    ['circle-1','circle-2','circle-3'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        el.className = 'stage-circle' + (i === 0 ? ' active' : '');
+        el.textContent = i + 1;
+    });
+    for (let cat = 1; cat <= 4; cat++) {
+        document.getElementById(`bar-cat${cat}`).style.width = '0%';
+        document.getElementById(`label-cat${cat}`).textContent = '';
+    }
+    document.getElementById('result-section').style.display = 'none';
+    document.getElementById('stage1-section').style.display = 'block';
+    renderStage1();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    renderStage1();
+    document.getElementById('submit-stage1-btn').addEventListener('click', submitStage1);
+    document.getElementById('submit-stage2-btn').addEventListener('click', submitStage2);
+    document.getElementById('retry-btn').addEventListener('click', retryQuiz);
+});
+</script>
 </body>
 </html>
